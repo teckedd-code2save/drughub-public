@@ -23,7 +23,7 @@ ALGORITHM = "HS256"
 
 # login route
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/users/signin"
+    tokenUrl=f"{settings.API_V1_STR}/auth/signin"
 )
 
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
@@ -212,6 +212,6 @@ def get_current_active_superuser(current_user: CurrentUser) -> AuthUser:
         )
     return current_user
 # Example usage in endpoint dependencies
-RequireEditProduct = Annotated[AuthUser, Depends(require_permissions(["edit_product"]))]
-RequireViewOrder = Annotated[AuthUser, Depends(require_permissions(["view_order"]))]
+RequireEditProduct = Annotated[AuthUser, Depends(require_permissions(["edit_products"]))]
+RequireViewOrder = Annotated[AuthUser, Depends(require_permissions(["view_orders"]))]
 RequireViewProfile = Annotated[AuthUser, Depends(require_permissions(["view_profile"]))]

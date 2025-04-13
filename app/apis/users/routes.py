@@ -11,8 +11,8 @@ from app.apis.users.models import (
     UserCreateRequest,
     UserResponse,
     UserResponsePublic,
-    UserSIgnInRequest,
-    UsersResponse
+    UsersResponse,
+    UsersResponsePublic
 )
 from app.apis.users.schemas import (
     UserUpdateRequest,
@@ -27,9 +27,8 @@ from app.utils.database import SessionDep
 from app.utils.config import settings
 from app.utils.security import get_password_hash, verify_password
 from app.models import (
-    Message,
-    Token,
-    TokenPayload,
+    AuthUser,
+    Message
    
 )
 
@@ -40,7 +39,7 @@ userService = Annotated[SessionDep, Depends(SessionDep)]
 @router.get(
     "/",
     dependencies=[Depends(get_current_active_superuser)],
-    response_model=UsersResponse,
+    response_model=UsersResponsePublic,
 )
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
@@ -48,7 +47,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
 
     users = crud.get_paginated_users(session=session, skip=skip, limit=limit)
-    count = users.count()
+    count = len(users)
     if not count:
         raise HTTPException(status_code=404, detail="No users found")
     if not users:
@@ -56,7 +55,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     if len(users) == 0:
         raise HTTPException(status_code=404, detail="No users found")
 
-    return UsersResponse(data=users, count=count)
+    return UsersResponsePublic(data=users, count=count)
 
 
 @router.post(
@@ -128,7 +127,7 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.get("/me", response_model=CurrentUser)
+@router.get("/me", response_model=AuthUser)
 def read_user_me(current_user: CurrentUser) -> Any:
     """
     Get current user.
@@ -164,21 +163,6 @@ def register_user(session: SessionDep, user_in: UserCreateRequest) -> Any:
     user_create = UserCreateRequest.model_validate(user_in)
     user = crud.register_user(session=session, user_create=user_create)
     return user
-
-@router.post("/signin", response_model=Token)
-def signin_user(session: SessionDep, user_in: UserSIgnInRequest) -> Any:
-    """
-   login user and return JWT token
-    """
-    token = crud.login_user(
-        email=user_in.email,
-        password=user_in.password,
-        session=session
-    )
-    if not token:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
-    return Token(
-        access_token=token)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -222,8 +206,8 @@ def update_user(
             status_code=404,
             detail="The user with this id does not exist in the system",
         )
-    if user_in.email:
-        existing_user = crud.get_user_by_email(email=user_in.email,session=session)
+    if db_user.email:
+        existing_user = crud.get_user_by_email(email=db_user.email,session=session)
         if existing_user and existing_user.id != user_id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
@@ -243,7 +227,7 @@ def delete_user(
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if user == current_user:
+    if user.id == current_user.id:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )

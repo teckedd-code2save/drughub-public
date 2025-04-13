@@ -83,6 +83,10 @@ class UsersResponse(SQLModel):
     data: List[UserResponse]
     count: int
 
+class UsersResponsePublic(SQLModel):
+    data: List[UserResponsePublic]
+    count: int
+
 
 class UserSIgnInRequest(SQLModel):
         
