@@ -2,20 +2,22 @@ from datetime import timedelta
 from typing import Annotated, Any
 
 from app.apis.users.models import UserSIgnInRequest
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,BackgroundTasks
 from fastapi.responses import HTMLResponse
 
 from app.apis.auth  import services as crud
 from app.utils.security import CurrentUser, get_current_active_superuser,get_password_hash
 from app.utils.database import  SessionDep
 
-from app.models import AuthUser, Message, NewPassword, Token
-from app.utils.email import (
+from app.models import AuthUser, EmailSchema, Message, NewPassword, Token, VerifyOTPRequest
+from app.utils.email_util import (
     generate_password_reset_token,
     generate_reset_password_email,
     send_email,
     verify_password_reset_token,
 )
+
+from app.utils.otp_email import send_otp, send_otp_mail,verify_otp
 
 router = APIRouter(prefix="/auth" ,tags=["signin"])
 
@@ -116,3 +118,20 @@ def recover_password_html_content(email: str, session: SessionDep) -> Any:
     return HTMLResponse(
         content=email_data.html_content, headers={"subject:": email_data.subject}
     )
+
+@router.post("/send-otp/")
+async def send_otp_email(email: EmailSchema, background_tasks: BackgroundTasks) -> Any:
+    """
+    Send OTP to email
+    """
+    background_tasks.add_task(send_otp_mail, email)
+    return {"message": "Email has been sent in the background"}
+
+
+@router.post("/verify-otp/")
+def verify_otp_email(data: VerifyOTPRequest) -> Message:
+    """
+    Verify OTP
+    """
+    return verify_otp(data=data)
+

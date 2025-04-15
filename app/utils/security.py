@@ -12,7 +12,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import  ValidationError
 from sqlalchemy import text
-from app.utils.logging import logger
+from app.utils.logging_utitl import logger
 
 
 # Password hashing context

@@ -1,6 +1,7 @@
 
 from sqlmodel import Field, SQLModel
 from typing import List, Optional
+from pydantic import EmailStr, BaseModel
 
 
 
@@ -33,3 +34,11 @@ class AuthUser(SQLModel):
     permissions: List[str] = []
     is_active: bool = True
     is_verified: bool = False
+
+
+class EmailSchema(BaseModel):
+    email: EmailStr
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str

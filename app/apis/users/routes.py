@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated, Any
 
-from app.utils.email import generate_new_account_email,send_email
+from app.utils.email_util import generate_new_account_email,send_email
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, delete
 

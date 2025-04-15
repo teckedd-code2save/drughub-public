@@ -1,19 +1,15 @@
 """
 users services
 """
-from datetime import timedelta
 from http.client import HTTPException
-from typing import Annotated, Optional, List
+from typing import Optional, List
 import uuid
 from app.utils.database  import SessionDep
-from app.apis.users.utils import get_user_by_mail
-from fastapi import Depends
 from sqlmodel import  select
 from app.apis.users.models import User, Role,UserCreateRequest,UserResponse,UserResponsePublic
 from app.apis.users.schemas import   UserUpdateRequest
-from app.utils.database import get_db
-from app.utils.security import create_access_token, get_password_hash, get_user_permissions, get_user_permissions_raw, verify_password
-from app.utils.logging import logger
+from app.utils.security import  get_password_hash
+from app.utils.logging_utitl import logger
 # ---------- User Services ----------
 
 

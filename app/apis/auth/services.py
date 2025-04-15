@@ -5,9 +5,9 @@ from datetime import timedelta
 from typing import Optional
 from app.utils.database  import SessionDep
 from sqlmodel import  select
-from app.apis.users.models import User, UserResponse
+from app.apis.users.models import User
 from app.utils.security import create_access_token,  get_user_permissions_raw, verify_password
-from app.utils.logging import logger
+from app.utils.logging_utitl import logger
 # ---------- User Services ----------
 
 

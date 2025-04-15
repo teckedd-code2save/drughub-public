@@ -27,7 +27,7 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file="../../.env",
+        env_file="../.env",
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -68,8 +68,8 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    SMTP_TLS: bool = True
-    SMTP_SSL: bool = False
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
     SMTP_PORT: int = 587
     SMTP_HOST: str | None = None
     FRONTEND_HOST: str | None = None
