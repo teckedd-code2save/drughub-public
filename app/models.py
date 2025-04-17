@@ -1,6 +1,6 @@
 
 from sqlmodel import Field, SQLModel
-from typing import List, Optional
+from typing import Any, List, Optional
 from pydantic import EmailStr, BaseModel
 
 
@@ -8,6 +8,8 @@ from pydantic import EmailStr, BaseModel
 # Generic message
 class Message(SQLModel):
     message: str
+    code : Optional[int] = 200
+    data : Any | None = None
 
 
 # JSON payload containing access token

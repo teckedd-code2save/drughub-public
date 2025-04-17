@@ -135,3 +135,4 @@ def verify_otp_email(data: VerifyOTPRequest) -> Message:
     """
     return verify_otp(data=data)
 
+
