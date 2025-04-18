@@ -20,8 +20,8 @@ fileConfig(config.config_file_name)
 
 from app.utils.config import settings # noqa
 # Import models explicitly to register with SQLModel.metadata
-from apis.users.models import User, Role  # Import your models
-from apis.products.models import Product  # Import your models
+from app.apis.users.models import User, Role  # Import your models
+from app.apis.products.models import Product  # Import your models
 from sqlmodel import SQLModel
 
 target_metadata = SQLModel.metadata

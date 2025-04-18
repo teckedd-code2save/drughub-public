@@ -17,7 +17,7 @@ from app.utils.email_util import (
     verify_password_reset_token,
 )
 
-from app.utils.otp_email import send_otp, send_otp_mail,verify_otp
+from app.utils.otp_email import send_otp_mail,verify_otp
 
 router = APIRouter(prefix="/auth" ,tags=["signin"])
 
