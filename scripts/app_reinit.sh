@@ -17,3 +17,4 @@ docker compose up -d --wait
 
 # Optionally attach logs
 # docker compose logs -f
+
