@@ -27,7 +27,7 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        env_file="../../env",
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: str | None = None
 
+    print("POSTGRES_SERVER:",POSTGRES_SERVER)
+    print("POSTGRES_PORT:",POSTGRES_PORT)
+    print("POSTGRES_USER:",POSTGRES_USER)
+    print("POSTGRES_PASSWORD:",POSTGRES_PASSWORD)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
