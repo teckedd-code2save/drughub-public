@@ -33,6 +33,8 @@ class NewPassword(SQLModel):
 # Auth User model
 class AuthUser(SQLModel):
     id: str
+    user_name: str
+    email: str
     permissions: List[str] = []
     is_active: bool = True
     is_verified: bool = False
