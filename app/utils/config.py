@@ -27,10 +27,11 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file="../../env",
+        env_file="../../backend/.env",
         env_ignore_empty=True,
         extra="ignore",
     )
+
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
@@ -61,10 +62,6 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: str | None = None
 
-    print("POSTGRES_SERVER:",POSTGRES_SERVER)
-    print("POSTGRES_PORT:",POSTGRES_PORT)
-    print("POSTGRES_USER:",POSTGRES_USER)
-    print("POSTGRES_PASSWORD:",POSTGRES_PASSWORD)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

@@ -6,7 +6,7 @@
 * [uv](https://docs.astral.sh/uv/) for Python package and environment management.
 
 ## Docker Compose
-
+Declares services including the application and its dependencies like redis and pg
 
 ## General Workflow
 
@@ -28,17 +28,11 @@ $ source .venv/bin/activate
 $ fastapi run --reload app/main.py
 ```
 
-## Backend tests
+## How to run
+- cd into scripts
+- run `chmod +x app_reinit.sh`
+- run `./app_reinit.sh`
 
-To test the backend run:
-
-```console
-$ bash ./scripts/test.sh
-```
-
-The tests run with Pytest, modify and add tests to `./backend/app/tests/`.
-
-If you use GitHub Actions the tests will run automatically.
 
 ### Test running stack
 
