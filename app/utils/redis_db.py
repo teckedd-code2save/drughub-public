@@ -1,7 +1,8 @@
 from datetime import datetime
+from app.utils.config import settings
 from redis import Redis
 
-redis_client = Redis(host='localhost', port=6379, db=0, decode_responses=True)
+redis_client = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
 
 async def set_redis_key(key: str, value: str, expiration: int = 3600) -> None:
     """

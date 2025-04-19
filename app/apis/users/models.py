@@ -71,6 +71,8 @@ class User(UserBase, table=True):
 class UserResponsePublic(SQLModel):
     id: uuid.UUID
     is_verified: bool
+    email: str
+    user_name: str 
     created_at: datetime
     updated_at: Optional[datetime]
     last_login: Optional[datetime]

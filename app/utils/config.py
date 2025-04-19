@@ -50,11 +50,17 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "Drug Hub"
     SENTRY_DSN: HttpUrl | None = None
-    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_SERVER: str | None = None
     POSTGRES_PORT: int = 5433
-    POSTGRES_USER: str = "algorizz"
-    POSTGRES_PASSWORD: str = "algorizz"
-    POSTGRES_DB: str = "drughubdb"
+    POSTGRES_USER: str | None = None
+    POSTGRES_PASSWORD: str | None = None
+    POSTGRES_DB: str | None = None
+
+
+    REDIS_HOST: str | None = None
+    REDIS_PORT: int = 6379
+    REDIS_DB: str | None = None
+
 
     @computed_field  # type: ignore[prop-decorator]
     @property

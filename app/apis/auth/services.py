@@ -46,6 +46,40 @@ def authenticate_user(email: str, password: str, session: SessionDep, expires_de
     )
     return token
 
+def authenticate_user_otp(email: str, session: SessionDep, expires_delta: timedelta = timedelta(minutes=15)) -> str:
+    """
+    Authenticate a user and return a JWT with permissions.
+    
+    Args:
+        email: User email
+        password: Plain password
+        session: Database session
+        expires_delta: Token expiration time (default 15 minutes)
+    Returns:
+        JWT token string
+    Raises:
+        ValueError: If credentials are invalid
+    """
+    # Fetch user by email.Return not found if user not found
+    user = get_user_by_mail(session,email)
+    if not user:
+        # Invalid credentials
+        # Log the failed login attempt
+        logger.info(f"Failed login attempt for email: {email}")
+        return None
+    
+
+    # Get user's permissions
+    permissions = get_user_permissions_raw(str(user.id), session)
+    logger.info(f"User permissions: {permissions}")
+    
+    # Create token with permissions baked in
+    token = create_access_token(
+        subject=str(user.id),
+        expires_delta=expires_delta,
+        permissions=permissions
+    )
+    return token
 
 
 def get_user_by_mail(session: SessionDep, email: str) -> User:
