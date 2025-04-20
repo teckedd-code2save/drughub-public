@@ -41,6 +41,7 @@ async def get_string(key: str) -> str:
     return value
 
 async def set_hash(key: str, field: str, value: str, ex: Optional[int] = None) -> bool:
+
     """
     Set a field in a hash in Redis with an optional TTL.
 
@@ -53,26 +54,25 @@ async def set_hash(key: str, field: str, value: str, ex: Optional[int] = None) -
     Returns:
         bool: True if the operation was successful, False otherwise.
     """
+    client = None
     try:
         client = redis_client()
         # Set the hash field
-        res = await client.hset(key, field, value)
-        if res:
-            logger.debug(f"Hash '{key}' field '{field}' set with value '{value}'")
-            # Set expiration if ex is provided
-            if ex is not None:
-                await client.expire(key, ex)
-                logger.debug(f"Set TTL of {ex} seconds for key '{key}'")
-        else:
-            logger.error(f"Failed to set hash '{key}' field '{field}'")
-            return False
+        client.hset(key, field, value)
+        logger.debug(f"Hash '{key}' field '{field}' set with value '{value}'")
+        
+        # Set expiration if ex is provided
+        if ex is not None:
+            client.expire(key, ex)
+            logger.debug(f"Set TTL of {ex} seconds for key '{key}'")
+        
         return True
     except Exception as e:
         logger.error(f"Error setting hash '{key}' field '{field}': {str(e)}")
         return False
     finally:
-        await client.close()
-
+        if client:
+             client.close()
 
 async def get_hash(key: str, field: str) -> str:
     """

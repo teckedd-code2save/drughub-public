@@ -45,7 +45,7 @@ async def verify_otp_email(data: VerifyOTPRequest,session: SessionDep,request:Re
     """
     Verify OTP
     """
-    res = verify_otp(data=data)
+    res = await verify_otp(data=data)
     if res.code == 200:
 
         login_session = await crud.authenticate_user_session(

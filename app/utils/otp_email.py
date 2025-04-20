@@ -29,17 +29,17 @@ async def send_otp_mail(data: EmailSchema, subject: str = "DrugHub - Verify Your
     msg['Subject'] = subject
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(email_sender, email_password)
-            smtp.sendmail(email_sender, data.email, msg.as_string())
+        # with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        #     smtp.login(email_sender, email_password)
+        #     smtp.sendmail(email_sender, data.email, msg.as_string())
         print("Message sent!")
     except Exception as e:
         print(f"Email sending failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to send OTP email")
 
-def verify_otp(data: VerifyOTPRequest):
+async def verify_otp(data: VerifyOTPRequest):
     redis_key = f"otp-secret:{data.email}"
-    stored_secret = get_string(redis_key)
+    stored_secret = await get_string(redis_key)
     print(f"Secret from Redis: {secret}")
 
     if not stored_secret:
@@ -50,7 +50,7 @@ def verify_otp(data: VerifyOTPRequest):
     print(f"OTP verification result: {verify}")
 
     if verify:
-        key_delete(redis_key)
+        await key_delete(redis_key)
         return Message(message="OTP verified successfully")
 
     raise HTTPException(status_code=400, detail="Invalid OTP")

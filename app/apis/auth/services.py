@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import Request, HTTPException
 from sqlmodel import select
 from app.utils.database import SessionDep
-from app.apis.auth.utils import get_session_key
+from app.apis.auth.utils import DateTimeEncoder, get_session_key
 from app.apis.auth.models import SessionModel, SessionResponse
 from app.apis.users.models import User
 from app.utils.security import create_access_token, get_user_permissions_raw
@@ -49,7 +49,7 @@ async def authenticate_user_session(
         raise HTTPException(status_code=500, detail="Session creation failed")
 
     # Update last_login
-    login_session.last_login = datetime.datetime.utcnow()
+    login_session.last_login = datetime.utcnow()
     
     # Convert to SessionResponse
     session_response = SessionResponse(
@@ -83,12 +83,13 @@ async def create_session(
             session_token=session_token,
             ip=request.client.host,
             account_id=account_id,
-            created_at=datetime.datetime.utcnow()
+            created_at=datetime.utcnow()
         )
         
         # Serialize SessionModel to JSON
         session_data = new_session.dict()
-        session_json = json.dumps(session_data)
+        print(session_data)
+        session_json = json.dumps(session_data,cls=DateTimeEncoder)
         
         # Store in Redis with expiration (e.g., 7 days)
         session_key = get_session_key(account_id)
