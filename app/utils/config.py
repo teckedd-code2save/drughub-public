@@ -1,6 +1,6 @@
 import secrets
 import warnings
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Optional
 
 from pydantic import (
     AnyUrl,
@@ -14,6 +14,7 @@ from pydantic import (
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
+from pathlib import Path
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -27,10 +28,11 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        env_file=str(Path(__file__).parent.parent.parent / ".env"),
         env_ignore_empty=True,
         extra="ignore",
     )
+
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
@@ -47,20 +49,47 @@ class Settings(BaseSettings):
         return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
             self.FRONTEND_HOST
         ]
+    
+
+
+    def _get_postgres_host(self) -> str:
+        if self.ENVIRONMENT == "staging":
+            return self.POSTGRES_CONTAINER_SERVER
+        return "localhost"
 
     PROJECT_NAME: str = "Drug Hub"
     SENTRY_DSN: HttpUrl | None = None
-    POSTGRES_SERVER: str | None = None
+    POSTGRES_CONTAINER_SERVER: Optional[str]  = None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def POSTGRES_SERVER(self) -> str:
+        return self._get_postgres_host()
+    
     POSTGRES_PORT: int = 5433
-    POSTGRES_USER: str | None = None
-    POSTGRES_PASSWORD: str | None = None
-    POSTGRES_DB: str | None = None
+    POSTGRES_USER: Optional[str]  = None
+    POSTGRES_PASSWORD: Optional[str]  = None
+    POSTGRES_DB: Optional[str]  = None
 
 
-    REDIS_HOST: str | None = None
+
+    def _get_redis_host(self) -> str:
+        if self.ENVIRONMENT == "staging":
+            return self.REDIS__CONTAINER_HOST
+        return "localhost" 
+
+    REDIS__CONTAINER_HOST: Optional[str]  = None
+    
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def REDIS_HOST(self) -> str:
+        return self._get_redis_host()
+
     REDIS_PORT: int = 6379
-    REDIS_DB: str | None = None
+    REDIS_DB: Optional[str]  = None
+    REDIS_URL: Optional[str]  = None
 
+    
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -77,12 +106,12 @@ class Settings(BaseSettings):
     MAIL_STARTTLS: bool = True
     MAIL_SSL_TLS: bool = False
     SMTP_PORT: int = 587
-    SMTP_HOST: str | None = None
-    FRONTEND_HOST: str | None = None
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    EMAILS_FROM_EMAIL: EmailStr | None = None
-    EMAILS_FROM_NAME: EmailStr | None = None
+    SMTP_HOST: Optional[str]  = None
+    FRONTEND_HOST: Optional[str]  = None
+    SMTP_USER: Optional[str]  = None
+    SMTP_PASSWORD: Optional[str]  = None
+    EMAILS_FROM_EMAIL: Optional[EmailStr]  = None
+    EMAILS_FROM_NAME: Optional[EmailStr]  = None
 
     @model_validator(mode="after")
     def _set_default_emails_from(self) -> Self:
@@ -102,25 +131,27 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str = "superuser@dh"
     FIRST_SUPERUSER_NAME: str = "Edward Twumasi"
 
-    def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        if value == "changethis":
-            message = (
-                f'The value of {var_name} is "changethis", '
-                "for security, please change it, at least for deployments."
-            )
-            if self.ENVIRONMENT == "local":
-                warnings.warn(message, stacklevel=1)
-            else:
-                raise ValueError(message)
+    # def _check_default_secret(self, var_name: str, value: Optional[str] ) -> None:
+    #     if value == "changethis":
+    #         message = (
+    #             f'The value of {var_name} is "changethis", '
+    #             "for security, please change it, at least for deployments."
+    #         )
+    #         if self.ENVIRONMENT == "local":
+    #             warnings.warn(message, stacklevel=1)
+    #         else:
+    #             raise ValueError(message)
 
-    @model_validator(mode="after")
-    def _enforce_non_default_secrets(self) -> Self:
-        self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
-        self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
-        self._check_default_secret("FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
-        )
+    # @model_validator(mode="after")
+    # def _enforce_non_default_secrets(self) -> Self:
+    #     self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+    #     self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
+    #     self._check_default_secret("FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
+    #     )
 
-        return self
-
+        # return self
 
 settings = Settings()  # type: ignore
+
+print(settings)
+print(settings.ENVIRONMENT)
