@@ -2,7 +2,7 @@ from app.models import EmailSchema, Message, VerifyOTPRequest
 from fastapi import  HTTPException
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from app.utils.config import settings
-from app.utils.redis_db import delete_redis_key, set_redis_key,get_redis_key
+from app.utils.redis_db import key_delete, set_string,get_string
 import pyotp
 import smtplib
 from email.mime.text import MIMEText
@@ -18,7 +18,7 @@ async def send_otp_mail(data: EmailSchema, subject: str = "DrugHub - Verify Your
     otp = totp.now()
 
     redis_key = f"otp-secret:{data.email}"
-    await set_redis_key(redis_key, secret, 300)  # 5-minute expiration
+    await set_string(redis_key, secret, 300)  # 5-minute expiration
     print(f"OTP: {otp}")
     print(f"Secret: {secret}")
     print(f"Verify OTP: {totp.verify(otp)}")
@@ -39,7 +39,7 @@ async def send_otp_mail(data: EmailSchema, subject: str = "DrugHub - Verify Your
 
 def verify_otp(data: VerifyOTPRequest):
     redis_key = f"otp-secret:{data.email}"
-    stored_secret = get_redis_key(redis_key)
+    stored_secret = get_string(redis_key)
     print(f"Secret from Redis: {secret}")
 
     if not stored_secret:
@@ -50,47 +50,7 @@ def verify_otp(data: VerifyOTPRequest):
     print(f"OTP verification result: {verify}")
 
     if verify:
-        delete_redis_key(redis_key)
+        key_delete(redis_key)
         return Message(message="OTP verified successfully")
 
     raise HTTPException(status_code=400, detail="Invalid OTP")
-# Redis setup
-# ----------- SEND WITH FASTAPIMAIL --------
-# Mail config
-# conf = ConnectionConfig(
-#     MAIL_USERNAME=settings.SMTP_USER,
-#     MAIL_PASSWORD=settings.SMTP_PASSWORD,
-#     MAIL_FROM=settings.EMAILS_FROM_EMAIL,
-#     MAIL_PORT=settings.SMTP_PORT,
-#     MAIL_SERVER=settings.SMTP_HOST,
-#     MAIL_FROM_NAME=settings.PROJECT_NAME,
-#     MAIL_STARTTLS=settings.MAIL_STARTTLS,
-#     MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
-#     USE_CREDENTIALS=True,
-#     VALIDATE_CERTS=True
-
-# )
-
-
-
-# async def send_otp(data: EmailSchema):
-#     secret = pyotp.random_base32()
-#     totp = pyotp.TOTP(secret)
-#     otp = totp.now()
-
-#     # Store secret in Redis with 5 min expiration
-#     redis_key = f"otp-secret:{data.email}"
-#     set_redis_key(redis_key,secret,300)
-
-#     # Send email
-#     message = MessageSchema(
-#         subject="Your OTP Code",
-#         recipients=[data.email],
-#         body=f"Your OTP code is: {otp}",
-#         subtype="plain"
-#     )
-#     fm = FastMail(conf)
-#     await fm.send_message(message)
-
-#     return {"detail": "OTP sent successfully"}
-
