@@ -51,18 +51,19 @@ def get_user_by_id(
     return user
 
 
+
 def get_user_by_email(
     email: str,
     session: SessionDep,
 ) -> Optional[UserResponse]:
-    """
-    Get a user by email
-    """
     statement = select(User).where(User.email == email)
-    user = session.exec(statement).first()
-    if not user:
+    result = session.execute(statement).first()
+    if not result:
         return None
-    return user
+
+    user = result[0]
+    return UserResponse.from_orm(user)
+
 
 
 def get_user_by_phone(
@@ -74,7 +75,7 @@ def get_user_by_phone(
     """
     
     statement = select(User).where(User.phone == phone)
-    user = session.exec(statement).first()
+    user = session.execute(statement).first()
     if not user:
         return None
     return user

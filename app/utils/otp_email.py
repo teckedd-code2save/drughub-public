@@ -18,7 +18,7 @@ async def send_otp_mail(data: EmailSchema, subject: str = "DrugHub - Verify Your
     otp = totp.now()
 
     redis_key = f"otp-secret:{data.email}"
-    await set_string(redis_key, secret, 300)  # 5-minute expiration
+    set_string(redis_key, secret, 300)  # 5-minute expiration
     print(f"OTP: {otp}")
     print(f"Secret: {secret}")
     print(f"Verify OTP: {totp.verify(otp)}")
@@ -39,7 +39,7 @@ async def send_otp_mail(data: EmailSchema, subject: str = "DrugHub - Verify Your
 
 async def verify_otp(data: VerifyOTPRequest):
     redis_key = f"otp-secret:{data.email}"
-    stored_secret = await get_string(redis_key)
+    stored_secret =  get_string(redis_key)
     print(f"Secret from Redis: {secret}")
 
     if not stored_secret:

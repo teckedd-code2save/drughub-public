@@ -78,7 +78,7 @@ class UserResponsePublic(SQLModel):
     last_login: Optional[datetime]
 
 class UserResponse(UserResponsePublic):
-    permissions: List[str]  # Populated by app logic
+    permissions: Optional[List[str]] = Field(default_factory=list)  # Populated by app logic
 
 # Collection Response
 class UsersResponse(SQLModel):

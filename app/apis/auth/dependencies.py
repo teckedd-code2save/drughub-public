@@ -26,7 +26,7 @@ async def verify_token(
         HTTPException: If the token is invalid or user not found.
     """
     # Get account_id from token
-    account_id = await get_account_id_by_session_token(token)
+    account_id =  get_account_id_by_session_token(token)
     if not account_id:
         logger.warning(f"Invalid session token: {token}")
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -34,11 +34,11 @@ async def verify_token(
     # Fetch session from Redis
     session_data = await get_session(account_id=account_id, session_id=token)
     if not session_data:
-        logger.warning(f"Session not found for token: {token}")
+        logger.warning(f"Session not found for account id : {account_id}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
     # Fetch user from database
-    user = await session.get(User, session_data.account_id)
+    user =  session.get(User, session_data.account_id)
     if not user:
         logger.warning(f"User not found for account_id: {session_data.account_id}")
         raise HTTPException(status_code=401, detail="User not found")

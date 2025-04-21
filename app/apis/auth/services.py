@@ -40,6 +40,7 @@ async def authenticate_user_session(
         logger.warning(f"No user exists for email: {email}")
         return None
 
+    logger.info(f"User found for email: {email}, user_id: {user}")
     logger.info(f"Creating new user session for user_id: {user.id}")
     
     # Create session
@@ -93,11 +94,17 @@ async def create_session(
         
         # Store in Redis with expiration (e.g., 7 days)
         session_key = user_sessions_key(account_id)
-        success = await set_hash(session_key, session_token, session_json, ex=604800)  # 7 days in seconds
+
+        logger.info(f"[Create New Session].account id : {account_id}. Session key :{session_key} . session field : {session_token}.  session value:  {session_json}")
+
+        success =  set_hash(session_key, session_token, session_json, ex=604800)  # 7 days in seconds
         # Store the session token in Redis agains account_id
-        res = await set_account_id_by_session(session_token, account_id)
+        
+        logger.info(f"[Save User For Session] . account id : {account_id}. Session key :{session_key} .  session value:  {account_id}")
+
+        res =  set_account_id_by_session_id(session_token, account_id)
         if success and res:
-            logger.debug(f"Session stored in Redis: {session_key}:{session_token}")
+            logger.info(f"Session stored in Redis: {session_key}:{session_token}")
 
             return new_session
         else:
@@ -119,27 +126,27 @@ async def get_session(account_id: str, session_id: str) -> Optional[SessionRespo
         SessionResponse: Session details if found, else None.
     """
     try:
-        session_key = user_sessions_key(account_id)
-        session_json = await get_hash(session_key, session_id)
+        account_session_key = user_sessions_key(account_id)
+        session_json = await get_hash(account_session_key, session_id)
         
         if not session_json:
-            logger.warning(f"Session not found: {session_key}:{session_id}")
+            logger.warning(f"Session not found for user. session key : {account_session_key}.session id:{session_id}")
             return None
             
         # Deserialize JSON to SessionResponse
         session_data = json.loads(session_json)
         session_response = SessionResponse(**session_data)
         
-        logger.debug(f"Session retrieved: {session_key}:{session_id}")
+        logger.info(f"Session retrieved for account. Key : {account_session_key}. session id : {session_id}")
         return session_response
     except json.JSONDecodeError:
-        logger.error(f"Invalid session data format in Redis: {session_key}:{session_id}")
+        logger.error(f"Invalid session data format in Redis: {account_session_key}:{session_id}")
         return None
     except ValidationError as e:
-        logger.error(f"Session validation failed: {session_key}:{session_id}: {str(e)}")
+        logger.error(f"Session validation failed: {account_session_key}:{session_id}: {str(e)}")
         return None
     except Exception as e:
-        logger.error(f"Error retrieving session: {session_key}:{session_id}: {str(e)}")
+        logger.error(f"Error retrieving session: {account_session_key}:{session_id}: {str(e)}")
         return None
 
 
@@ -229,11 +236,13 @@ def get_user_by_email(session: SessionDep, email: str) -> Optional[User]:
     Returns:
         User: User object if found, else None.
     """
-    statement = select(User).where(User.email == email)
-    user = session.exec(statement).first()
+    stmt = select(User).where(User.email == email)
+    result = session.execute(stmt)
+    user = result.scalars().first()
+
     return user
 
-def set_account_id_by_session(session_token: str,user_id:str) -> bool:
+def set_account_id_by_session_id(session_token: str,user_id:str) -> bool:
     """
     Cache the user ID by session token in Redis.
     Args:
@@ -247,13 +256,13 @@ def set_account_id_by_session(session_token: str,user_id:str) -> bool:
         # Store the user ID in Redis with the session token as the key
         success = set_string(key, user_id, expiration=604800)  # 7 days in seconds
         if success:
-            logger.debug(f"User ID cached: {session_token}:{user_id}")
+            logger.info(f"[Set Account ID] Success. session key : {key}. account id:{user_id}")
             return True
         else:
-            logger.error(f"Failed to cache user ID: {session_token}:{user_id}")
+            logger.error(f"[Set Account ID] Failed. session key : {key}. account id:{user_id}")
             return False
     except Exception as e:
-        logger.error(f"Error caching user ID: {session_token}:{user_id}: {str(e)}")
+        logger.error(f"[Set Account ID] Error caching user ID: {session_token}:{user_id}: {str(e)}")
         return False
 
 
@@ -271,11 +280,11 @@ def get_account_id_by_session_token(session_token: str) -> Optional[str]:
     try:
         user_id = get_string(key)
         if user_id:
-            logger.debug(f"User ID retrieved: {session_token}:{user_id}")
+            logger.info(f"[Get Account ID] Success .session key : {session_token}. account id:{user_id}")
             return user_id
         else:
-            logger.warning(f"User ID not found for session token: {session_token}")
+            logger.warning(f"[Get Account ID] Failed .session key : {session_token}. account id:{user_id}")
             return None
     except Exception as e:
-        logger.error(f"Error retrieving user ID: {session_token}: {str(e)}")
+        logger.error(f"[Get Account ID] Error retrieving user ID: {session_token}: {str(e)}")
         return None

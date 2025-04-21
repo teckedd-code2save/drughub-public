@@ -6,12 +6,12 @@ from app.utils.logging_util import logger
 
 
 def redis_client() -> Redis:
-    if settings.ENVIRONMENT == "staging":
+    if settings.ENVIRONMENT == "production":
         return Redis.from_url(settings.REDIS_URL, decode_responses=True)
     return Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
     
 
-async def set_string(key: str, value: str, expiration: int = 3600) -> bool:
+def set_string(key: str, value: str, expiration: int = 3600) -> bool:
     """
     Set a key-value pair in Redis
     Args:
@@ -21,12 +21,12 @@ async def set_string(key: str, value: str, expiration: int = 3600) -> bool:
     """
     res = redis_client().set(key, value, ex=expiration)
     if res:
-        print(f"Key '{key}' set with value '{value}' and expiration {expiration} seconds.")
+        print(f"string Key '{key}' set with string value '{value}' and expiration {expiration} seconds.")
     else:
         print(f"Failed to set key '{key}'.")
     return res
 
-async def get_string(key: str) -> str:
+def get_string(key: str) -> str:
     """
     Get a value from Redis by key
     Args:
@@ -36,12 +36,12 @@ async def get_string(key: str) -> str:
     """
     value = redis_client().get(key)
     if value:
-        print(f"Key '{key}' has value '{value}'.")
+        print(f"string Key '{key}' has string value '{value}'.")
     else:
-        print(f"Key '{key}' not found.")
+        print(f"string Key '{key}' not found.")
     return value
 
-async def set_hash(key: str, field: str, value: str, ex: Optional[int] = None) -> bool:
+def set_hash(key: str, field: str, value: str, ex: Optional[int] = None) -> bool:
 
     """
     Set a field in a hash in Redis with an optional TTL.
@@ -60,16 +60,16 @@ async def set_hash(key: str, field: str, value: str, ex: Optional[int] = None) -
         client = redis_client()
         # Set the hash field
         client.hset(key, field, value)
-        logger.debug(f"Hash '{key}' field '{field}' set with value '{value}'")
+        logger.info(f"Hash key '{key}' with hash field '{field}' set with hash value '{value}'")
         
         # Set expiration if ex is provided
         if ex is not None:
             client.expire(key, ex)
-            logger.debug(f"Set TTL of {ex} seconds for key '{key}'")
+            logger.info(f"Set TTL of {ex} seconds for key '{key}'")
         
         return True
     except Exception as e:
-        logger.error(f"Error setting hash '{key}' field '{field}': {str(e)}")
+        logger.error(f"Error setting hash '{key}' for hash field '{field}': {str(e)}")
         return False
     finally:
         if client:
@@ -86,9 +86,9 @@ async def get_hash(key: str, field: str) -> str:
     """
     value = redis_client().hget(key, field)
     if value:
-        print(f"Hash '{key}' field '{field}' has value '{value}'.")
+        print(f"Hash key'{key}' for hash field '{field}' has hash value '{value}'.")
     else:
-        print(f"Hash '{key}' field '{field}' not found.")
+        print(f"Hash key'{key}' with hash field '{field}' not found.")
     return value
 
 async def get_hash_all(key: str) -> dict:

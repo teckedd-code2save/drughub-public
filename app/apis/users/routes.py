@@ -68,15 +68,12 @@ def read_user_by_id(
     """
     Get a specific user by id.
     """
+    
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not session_user.is_active:
-        raise HTTPException(
-            status_code=403,
-            detail="The user doesn't have enough privileges",
-        )
-    res = UserResponse(**user.dict(), permissions=session_user.permissions)
+
+    res = UserResponse(**user.dict(), permissions=[])
     return res
 
 
