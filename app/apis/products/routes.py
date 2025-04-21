@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.utils.database import SessionDep
-from app.utils.security import CurrentUser
+from app.utils.security import AuthenticatedUser
 from app.models import Message
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 @router.get("/", response_model=ProductsResponse)
 def read_products(
-    session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
+    session: SessionDep, current_user: AuthenticatedUser, skip: int = 0, limit: int = 100
 ) -> Any:
     """
     Retrieve products.
@@ -44,7 +44,7 @@ def read_products(
 
 
 @router.get("/{id}", response_model=ProductResponse)
-def read_product(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
+def read_product(session: SessionDep, current_user: AuthenticatedUser, id: uuid.UUID) -> Any:
     """
     Get product by ID.
     """
@@ -58,7 +58,7 @@ def read_product(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) 
 
 @router.post("/", response_model=ProductResponse)
 def create_product(
-    *, session: SessionDep, current_user: CurrentUser, product_in: ProductCreate
+    *, session: SessionDep, current_user: AuthenticatedUser, product_in: ProductCreate
 ) -> Any:
     """
     Create new product.
@@ -74,7 +74,7 @@ def create_product(
 def update_product(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    current_user: AuthenticatedUser,
     id: uuid.UUID,
     product_in: ProductUpdate,
 ) -> Any:
@@ -96,7 +96,7 @@ def update_product(
 
 @router.delete("/{id}")
 def delete_product(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
+    session: SessionDep, current_user: AuthenticatedUser, id: uuid.UUID
 ) -> Message:
     """
     Delete an product.

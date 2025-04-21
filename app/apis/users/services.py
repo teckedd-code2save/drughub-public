@@ -9,7 +9,7 @@ from sqlmodel import  select
 from app.apis.users.models import User, Role,UserCreateRequest,UserResponse,UserResponsePublic
 from app.apis.users.schemas import   UserUpdateRequest
 from app.utils.security import  get_password_hash
-from app.utils.logging_utitl import logger
+from app.utils.logging_util import logger
 # ---------- User Services ----------
 
 
@@ -79,22 +79,21 @@ def get_user_by_phone(
         return None
     return user
 
-def get_paginated_users(
-    session: SessionDep,
-     skip: int = 0,
+async def get_paginated_users(
+    session: SessionDep,  # Using SessionDep
+    skip: int = 0,
     limit: int = 100,
 ) -> List[UserResponse]:
     """
     Get a paginated list of users
     """
-    
     statement = select(User).offset(skip).limit(limit)
-    users = session.exec(statement).all()
+    result = await session.execute(statement)  # Use execute with await
+    users = result.scalars().all()  # Extract results
     logger.info(f"Users: {users}")
     if not users or len(users) == 0:
         raise HTTPException(status_code=404, detail="No users found")
     return users
-
 
 def update_user(user_id: uuid.UUID, user_update: UserUpdateRequest, session: SessionDep) -> UserResponse:
     """
@@ -155,4 +154,5 @@ def assign_role_to_user(
     session.commit()
     session.refresh(user)
     return user
+
 

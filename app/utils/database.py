@@ -1,41 +1,75 @@
-from sqlmodel import Session, create_engine
-from typing import Annotated
+from typing import AsyncGenerator, Annotated
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from google.cloud.sql.connector import Connector, IPTypes
+from sqlmodel import SQLModel
+from app.utils.logging_util import logger
+from app.utils.config import settings
 from fastapi import Depends
 
-from app.utils.config import settings
-from collections.abc import Generator
+# Base class for SQLModel models
+Base = declarative_base()
 
-engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+async def get_cloud_sql_connection():
+    """
+    Create an asyncpg connection to Cloud SQL.
+    """
+    try:
+        connector = Connector()
+        connection = connector.connect(
+            settings.INSTANCE_CONNECTION_NAME,
+            "asyncpg",
+            user=settings.DB_USER,
+            password=settings.DB_PASS,
+            db=settings.DB_NAME,
+            ip_type=IPTypes.PUBLIC if settings.IP_TYPE == "public" else IPTypes.PRIVATE
+        )
+        logger.debug(f"Connected to Cloud SQL instance: {settings.INSTANCE_CONNECTION_NAME}")
+        return connection
+    except Exception as e:
+        logger.error(f"Failed to connect to Cloud SQL: {str(e)}")
+        raise
 
+# Create async engine
+engine = create_async_engine(
+    str(settings.SQLALCHEMY_DATABASE_URI),
+    async_creator=get_cloud_sql_connection if settings.ENVIRONMENT == "production" else None,
+    echo=settings.SQLALCHEMY_ECHO
+)
 
-# make sure all SQLModel models are imported (app.models) before initializing DB
-# otherwise, SQLModel might fail to initialize relationships properly
-# for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
+# Create async session factory
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False
+)
 
-def get_db() -> Generator[Session, None, None]:
-    with Session(engine) as session:
-        yield session
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Dependency to provide an async database session.
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception as e:
+            logger.error(f"Database session error: {str(e)}")
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
-SessionDep = Annotated[Session, Depends(get_db)]
+# Dependency for injection
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
+async def init_db():
+    """
+    Initialize database tables.
+    """
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+        logger.info("Database tables created")
 
-# def init_db(session: Session) -> User:
-#     # Tables should be created with Alembic migrations
-#     # But if you don't want to use migrations, create
-#     # the tables un-commenting the next lines
-#     # from sqlmodel import SQLModel
-
-#     # This works because the models are already imported and registered from app.models
-#     SQLModel.metadata.create_all(engine)
-
-#     user = session.exec(
-#         select(User).where(User.email == settings.FIRST_SUPERUSER)
-#     ).first()
-#     if not user:
-#         user_in = UserCreate(
-#             email=settings.FIRST_SUPERUSER,
-#             password=settings.FIRST_SUPERUSER_PASSWORD,
-#             is_superuser=True,
-#             full_name=settings.FIRST_SUPERUSER,
-#         )
-#         user = crud.create_user(session=session, user_create=user_in)
+        

@@ -51,7 +51,6 @@ class Settings(BaseSettings):
         ]
     
 
-
     def _get_postgres_host(self) -> str:
         if self.ENVIRONMENT == "staging":
             return self.POSTGRES_CONTAINER_SERVER
@@ -71,7 +70,13 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: Optional[str]  = None
     POSTGRES_DB: Optional[str]  = None
 
-
+# Goodle cloud sql
+    INSTANCE_CONNECTION_NAME: Optional[str]  = None
+    IP_TYPE: Literal["public", "private"] = "public"
+    DB_USER: Optional[str]  = None
+    DB_PASS: Optional[str]  = None
+    DB_NAME: Optional[str]  = None
+    SQLALCHEMY_ECHO: bool = False
 
     def _get_redis_host(self) -> str:
         if self.ENVIRONMENT == "staging":
@@ -91,17 +96,40 @@ class Settings(BaseSettings):
 
     
 
-    @computed_field  # type: ignore[prop-decorator]
+    # @computed_field  # type: ignore[prop-decorator]
+    # @property
+    # def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+    #     return MultiHostUrl.build(
+    #         scheme="postgresql+psycopg",
+    #         username=self.POSTGRES_USER,
+    #         password=self.POSTGRES_PASSWORD,
+    #         host=self.POSTGRES_SERVER,
+    #         port=self.POSTGRES_PORT,
+    #         path=self.POSTGRES_DB,
+    #     )
+
+    @computed_field
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+        if self.ENVIRONMENT == "production":
+            # Use dummy host for Cloud SQL (actual connection via async_creator)
+            return MultiHostUrl.build(
+                scheme="postgresql+asyncpg",
+                username=self.DB_USER,
+                password=self.DB_PASS,
+                host="localhost",  # Dummy host, ignored by Cloud SQL Connector
+                port=5432,
+                path=self.DB_NAME,
+            )
         return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
+            scheme="postgresql+asyncpg",
             username=self.POSTGRES_USER,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_SERVER,
             port=self.POSTGRES_PORT,
             path=self.POSTGRES_DB,
         )
+
 
     MAIL_STARTTLS: bool = True
     MAIL_SSL_TLS: bool = False

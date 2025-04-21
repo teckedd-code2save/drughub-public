@@ -12,7 +12,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import  ValidationError
 from sqlalchemy import text
-from app.utils.logging_utitl import logger
+from app.utils.logging_util import logger
 
 
 # Password hashing context
@@ -191,11 +191,11 @@ def get_current_user(
     return auth_user
 
 # Base dependency
-CurrentUser = Annotated[AuthUser, Depends(get_current_user)]
+AuthenticatedUser = Annotated[AuthUser, Depends(get_current_user)]
 
 # Permission check dependency
 def require_permissions(required_permissions: List[str]):
-    def check_permissions(current_user: CurrentUser) -> AuthUser:
+    def check_permissions(current_user: AuthenticatedUser) -> AuthUser:
         if not all(perm in current_user.permissions for perm in required_permissions):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -205,7 +205,7 @@ def require_permissions(required_permissions: List[str]):
     return check_permissions
 
 # Superuser check
-def get_current_active_superuser(current_user: CurrentUser) -> AuthUser:
+def get_current_active_superuser(current_user: AuthenticatedUser) -> AuthUser:
     if not current_user.is_verified:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"

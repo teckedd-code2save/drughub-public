@@ -1,3 +1,4 @@
+from app.utils.database import init_db
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -29,5 +30,8 @@ if settings.all_cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
+# @app.on_event("startup")
+# async def on_startup():
+#     await init_db()
+    
 app.include_router(api_router, prefix=settings.API_V1_STR)

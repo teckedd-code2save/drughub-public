@@ -5,12 +5,12 @@ from typing import Optional
 from fastapi import Request, HTTPException
 from sqlmodel import select
 from app.utils.database import SessionDep
-from app.apis.auth.utils import DateTimeEncoder, get_session_key
+from app.apis.auth.utils import DateTimeEncoder, login_session_key, user_sessions_key
 from app.apis.auth.models import SessionModel, SessionResponse
 from app.apis.users.models import User
-from app.utils.security import create_access_token, get_user_permissions_raw
-from app.utils.redis_db import set_hash, get_hash
-from app.utils.logging_utitl import logger
+from app.utils.security import create_access_token, get_user_permissions_raw, verify_password
+from app.utils.redis_db import get_string, set_hash, get_hash, set_string
+from app.utils.logging_util import logger
 from pydantic import ValidationError
 
 # ---------- User Services ----------
@@ -92,10 +92,13 @@ async def create_session(
         session_json = json.dumps(session_data,cls=DateTimeEncoder)
         
         # Store in Redis with expiration (e.g., 7 days)
-        session_key = get_session_key(account_id)
+        session_key = user_sessions_key(account_id)
         success = await set_hash(session_key, session_token, session_json, ex=604800)  # 7 days in seconds
-        if success:
+        # Store the session token in Redis agains account_id
+        res = await set_account_id_by_session(session_token, account_id)
+        if success and res:
             logger.debug(f"Session stored in Redis: {session_key}:{session_token}")
+
             return new_session
         else:
             logger.error(f"Failed to store session in Redis: {session_key}:{session_token}")
@@ -116,7 +119,7 @@ async def get_session(account_id: str, session_id: str) -> Optional[SessionRespo
         SessionResponse: Session details if found, else None.
     """
     try:
-        session_key = get_session_key(account_id)
+        session_key = user_sessions_key(account_id)
         session_json = await get_hash(session_key, session_id)
         
         if not session_json:
@@ -229,3 +232,50 @@ def get_user_by_email(session: SessionDep, email: str) -> Optional[User]:
     statement = select(User).where(User.email == email)
     user = session.exec(statement).first()
     return user
+
+def set_account_id_by_session(session_token: str,user_id:str) -> bool:
+    """
+    Cache the user ID by session token in Redis.
+    Args:
+        session_token: Session token.
+        user_id: User ID.
+    Returns: 
+        bool: True if caching succeeded, else False.
+    """
+    key = login_session_key(session_token)
+    try:
+        # Store the user ID in Redis with the session token as the key
+        success = set_string(key, user_id, expiration=604800)  # 7 days in seconds
+        if success:
+            logger.debug(f"User ID cached: {session_token}:{user_id}")
+            return True
+        else:
+            logger.error(f"Failed to cache user ID: {session_token}:{user_id}")
+            return False
+    except Exception as e:
+        logger.error(f"Error caching user ID: {session_token}:{user_id}: {str(e)}")
+        return False
+
+
+def get_account_id_by_session_token(session_token: str) -> Optional[str]:
+    """
+    Retrieve the user ID by session token from Redis.
+    
+    Args:
+        session_token: Session token.
+    
+    Returns:
+        str: User ID if found, else None.
+    """
+    key = login_session_key(session_token)
+    try:
+        user_id = get_string(key)
+        if user_id:
+            logger.debug(f"User ID retrieved: {session_token}:{user_id}")
+            return user_id
+        else:
+            logger.warning(f"User ID not found for session token: {session_token}")
+            return None
+    except Exception as e:
+        logger.error(f"Error retrieving user ID: {session_token}: {str(e)}")
+        return None

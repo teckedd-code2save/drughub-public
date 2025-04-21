@@ -11,7 +11,7 @@ from jwt.exceptions import InvalidTokenError
 
 from app.utils import security
 from app.utils.config import settings
-from app.utils.logging_utitl import logger
+from app.utils.logging_util import logger
 
 
 @dataclass

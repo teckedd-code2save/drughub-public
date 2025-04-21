@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from app.utils.config import settings
 from redis import Redis
-from app.utils.logging_utitl import logger
+from app.utils.logging_util import logger
 
 
 def redis_client() -> Redis:
@@ -11,7 +11,7 @@ def redis_client() -> Redis:
     return Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
     
 
-async def set_string(key: str, value: str, expiration: int = 3600) -> None:
+async def set_string(key: str, value: str, expiration: int = 3600) -> bool:
     """
     Set a key-value pair in Redis
     Args:
@@ -24,6 +24,7 @@ async def set_string(key: str, value: str, expiration: int = 3600) -> None:
         print(f"Key '{key}' set with value '{value}' and expiration {expiration} seconds.")
     else:
         print(f"Failed to set key '{key}'.")
+    return res
 
 async def get_string(key: str) -> str:
     """

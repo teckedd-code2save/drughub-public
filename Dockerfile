@@ -45,5 +45,5 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Make script executable
 RUN chmod +x /app/scripts/prestart.sh
 
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
-CMD ["/app/scripts/prestart.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
+# CMD ["/app/scripts/prestart.sh"]

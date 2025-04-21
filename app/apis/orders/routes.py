@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.utils.security import AuthUser, RequireViewOrder, CurrentUser
+from app.utils.security import AuthUser, RequireViewOrder, AuthenticatedUser
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
