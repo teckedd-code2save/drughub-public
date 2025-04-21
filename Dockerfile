@@ -42,8 +42,10 @@ COPY ./alembic /app/alembic
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync
 
+    
 # Make script executable
-RUN chmod +x /app/scripts/prestart.sh
+# RUN chmod +x /app/scripts/prestart.sh
+EXPOSE 8080
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
 # CMD ["/app/scripts/prestart.sh"]
