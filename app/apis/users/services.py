@@ -1,7 +1,7 @@
 """
 users services
 """
-from http.client import HTTPException
+from fastapi import HTTPException
 from typing import Optional, List
 import uuid
 from app.utils.database  import SessionDep
@@ -88,7 +88,7 @@ async def get_paginated_users(
     Get a paginated list of users
     """
     statement = select(User).offset(skip).limit(limit)
-    result = await session.execute(statement)  # Use execute with await
+    result =  session.execute(statement)  # Use execute with await
     users = result.scalars().all()  # Extract results
     logger.info(f"Users: {users}")
     if not users or len(users) == 0:
